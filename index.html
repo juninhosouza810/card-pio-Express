@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cardápio Digital — Sistema para Restaurantes</title>
+  <meta name="description" content="Sistema completo de cardápio digital com pedidos por mesa e gerenciamento em tempo real">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #e63946;
+      --secondary: #1a1a2e;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: white;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .logo-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--primary);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px rgba(230,57,70,0.5);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: rgba(255,255,255,0.65);
+      max-width: 600px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 60px;
+    }
+
+    .btn-cta {
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-cta-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 20px rgba(230,57,70,0.5);
+    }
+
+    .btn-cta-primary:hover {
+      background: #c1121f;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(230,57,70,0.6);
+    }
+
+    .btn-cta-secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-cta-secondary:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .feature {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      transition: all 0.25s;
+    }
+
+    .feature:hover {
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-4px);
+    }
+
+    .feature-icon { font-size: 2rem; margin-bottom: 12px; }
+    .feature-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .feature-desc { font-size: 0.82rem; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.82rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="logo-icon">🍽️</div>
+    <h1>Cardápio Digital</h1>
+    <p class="subtitle">
+      Sistema completo para restaurantes. Clientes fazem pedidos pelo celular via QR Code,
+      e você gerencia tudo em tempo real no painel administrativo.
+    </p>
+
+    <div class="cta-buttons">
+      <a href="admin/login.html" class="btn-cta btn-cta-primary">
+        🚀 Acessar Painel Admin
+      </a>
+      <a href="admin/login.html" class="btn-cta btn-cta-secondary">
+        📝 Criar Conta Grátis
+      </a>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">QR Code por Mesa</div>
+        <div class="feature-desc">Clientes escaneiam e fazem pedidos direto pelo celular</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Tempo Real</div>
+        <div class="feature-desc">Pedidos chegam instantaneamente no painel com notificação sonora</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🧾</div>
+        <div class="feature-title">Impressão de Comanda</div>
+        <div class="feature-desc">Compatível com impressoras térmicas de 58mm e 80mm</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Dashboard Completo</div>
+        <div class="feature-desc">Acompanhe pedidos, faturamento e status em tempo real</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🍔</div>
+        <div class="feature-title">Cardápio Completo</div>
+        <div class="feature-desc">Produtos com foto, descrição, preço e categorias</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌙</div>
+        <div class="feature-title">Modo Escuro</div>
+        <div class="feature-desc">Interface moderna com suporte a tema claro e escuro</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Cardápio Digital — Sistema para Restaurantes &nbsp;|&nbsp; Powered by Firebase + Vercel
+  </footer>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configurações — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-placeholder" id="sidebarLogoPlaceholder">🍽️</div>
+        <img id="sidebarLogo" style="display:none" alt="Logo">
+        <div class="logo-text">
+          <h3 id="sidebarName">Meu Restaurante</h3>
+          <span>Painel Admin</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item" href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+          <a class="nav-item" href="pedidos.html"><span class="nav-icon">🛒</span> Pedidos <span class="nav-badge hidden" id="ordersBadge">0</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cardápio</div>
+          <a class="nav-item" href="categorias.html"><span class="nav-icon">📂</span> Categorias</a>
+          <a class="nav-item" href="produtos.html"><span class="nav-icon">🍔</span> Produtos</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Configurações</div>
+          <a class="nav-item active" href="configuracoes.html"><span class="nav-icon">⚙️</span> Estabelecimento</a>
+          <a class="nav-item" href="qrcode.html"><span class="nav-icon">📱</span> QR Code</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-email" id="userEmail">email@exemplo.com</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">🚪 Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h2 class="topbar-title">Configurações do Estabelecimento</h2>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm btn-icon" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="settings-grid">
+          <!-- Logo e identidade -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🖼️ Logo e Identidade</h3>
+            </div>
+            <div class="card-body">
+              <div class="logo-upload-area">
+                <img id="logoPreview" class="logo-preview" style="display:none" alt="Logo">
+                <div class="logo-preview-placeholder" id="logoPlaceholder" onclick="document.getElementById('logoInput').click()">
+                  🍽️
+                </div>
+                <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="previewLogo(event)">
+                <button class="btn btn-outline btn-sm" onclick="document.getElementById('logoInput').click()">
+                  📷 Alterar Logo
+                </button>
+                <p class="text-muted text-sm">PNG, JPG ou WebP. Máx. 2MB</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informações básicas -->
+          <div class="card">
+            <div class="card-header">
+              <h3>📋 Informações Básicas</h3>
+            </div>
+            <div class="card-body">
+              <form id="configForm" onsubmit="saveConfig(event)">
+                <div class="form-group">
+                  <label class="form-label">Nome do Estabelecimento *</label>
+                  <input type="text" class="form-control" id="cfgNome" placeholder="Ex: Restaurante do João" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">WhatsApp</label>
+                  <input type="tel" class="form-control" id="cfgWhatsapp" placeholder="(11) 99999-9999">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Endereço</label>
+                  <input type="text" class="form-control" id="cfgEndereco" placeholder="Rua, número, bairro, cidade">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Descrição / Slogan</label>
+                  <textarea class="form-control" id="cfgDescricao" placeholder="Uma breve descrição do seu estabelecimento..." rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="saveBtn">
+                  💾 Salvar Configurações
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Configurações do sistema -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔔 Notificações</h3>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-center justify-between" style="margin-bottom:16px">
+                <div>
+                  <div class="fw-semibold">Som de novos pedidos</div>
+                  <div class="text-muted text-sm">Tocar som ao receber pedido</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggleSound" checked onchange="savePreference('sound', this.checked)">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="d-flex align-center justify-between" style="margin-bottom:16px">
+                <div>
+                  <div class="fw-semibold">Impressão automática</div>
+                  <div class="text-muted text-sm">Imprimir comanda ao receber pedido</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggleAutoPrint" onchange="savePreference('autoPrint', this.checked)">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="d-flex align-center justify-between">
+                <div>
+                  <div class="fw-semibold">Modo escuro</div>
+                  <div class="text-muted text-sm">Interface com fundo escuro</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggleDark" onchange="toggleDarkMode()">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conta -->
+          <div class="card">
+            <div class="card-header">
+              <h3>🔐 Conta</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">E-mail da conta</label>
+                <input type="email" class="form-control" id="cfgEmail" disabled>
+              </div>
+              <button class="btn btn-outline btn-full" onclick="sendPasswordReset()">
+                🔑 Alterar Senha por E-mail
+              </button>
+              <div style="margin-top:16px;padding:14px;background:rgba(231,76,60,0.08);border-radius:8px;border:1px solid rgba(231,76,60,0.2)">
+                <div class="fw-semibold text-sm" style="color:var(--danger);margin-bottom:6px">⚠️ Zona de Perigo</div>
+                <p class="text-muted text-sm" style="margin-bottom:10px">Ao sair, você precisará fazer login novamente.</p>
+                <button class="btn btn-danger btn-sm" onclick="handleLogout()">🚪 Sair da Conta</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/admin-utils.js"></script>
+
+  <script>
+    let currentUser = null;
+    let logoFile = null;
+
+    requireAuth(async (user) => {
+      currentUser = user;
+      initSidebar();
+      document.getElementById('cfgEmail').value = user.email;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      await loadConfig(user.uid);
+      loadPreferences();
+    });
+
+    async function loadConfig(uid) {
+      const est = await getEstabelecimento(uid);
+      if (est.nome) {
+        document.getElementById('cfgNome').value = est.nome;
+        document.getElementById('sidebarName').textContent = est.nome;
+        document.getElementById('userName').textContent = est.nome;
+      }
+      if (est.whatsapp) document.getElementById('cfgWhatsapp').value = est.whatsapp;
+      if (est.endereco) document.getElementById('cfgEndereco').value = est.endereco;
+      if (est.descricao) document.getElementById('cfgDescricao').value = est.descricao;
+      if (est.logoUrl) {
+        document.getElementById('logoPreview').src = est.logoUrl;
+        document.getElementById('logoPreview').style.display = 'block';
+        document.getElementById('logoPlaceholder').style.display = 'none';
+        document.getElementById('sidebarLogo').src = est.logoUrl;
+        document.getElementById('sidebarLogo').style.display = 'block';
+        document.getElementById('sidebarLogoPlaceholder').style.display = 'none';
+      }
+    }
+
+    function previewLogo(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Imagem muito grande. Máximo 2MB.', 'error');
+        return;
+      }
+      logoFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('logoPreview').src = e.target.result;
+        document.getElementById('logoPreview').style.display = 'block';
+        document.getElementById('logoPlaceholder').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveConfig(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      try {
+        let logoUrl = null;
+        if (logoFile) {
+          showLoading('Enviando logo...');
+          logoUrl = await uploadImage(logoFile, `logos/${currentUser.uid}/logo`);
+          hideLoading();
+        }
+
+        const data = {
+          'estabelecimento.nome': document.getElementById('cfgNome').value.trim(),
+          'estabelecimento.whatsapp': document.getElementById('cfgWhatsapp').value.trim(),
+          'estabelecimento.endereco': document.getElementById('cfgEndereco').value.trim(),
+          'estabelecimento.descricao': document.getElementById('cfgDescricao').value.trim(),
+          'estabelecimento.atualizadoEm': firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (logoUrl) data['estabelecimento.logoUrl'] = logoUrl;
+
+        await db.collection('users').doc(currentUser.uid).update(data);
+        showToast('Configurações salvas com sucesso!', 'success');
+
+        // Atualizar sidebar
+        document.getElementById('sidebarName').textContent = data['estabelecimento.nome'];
+        document.getElementById('userName').textContent = data['estabelecimento.nome'];
+        if (logoUrl) {
+          document.getElementById('sidebarLogo').src = logoUrl;
+          document.getElementById('sidebarLogo').style.display = 'block';
+          document.getElementById('sidebarLogoPlaceholder').style.display = 'none';
+        }
+      } catch (err) {
+        showToast('Erro ao salvar: ' + err.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = '💾 Salvar Configurações';
+    }
+
+    function savePreference(key, value) {
+      localStorage.setItem('pref_' + key, value);
+      showToast('Preferência salva!', 'success');
+    }
+
+    function loadPreferences() {
+      document.getElementById('toggleSound').checked = localStorage.getItem('pref_sound') !== 'false';
+      document.getElementById('toggleAutoPrint').checked = localStorage.getItem('pref_autoPrint') === 'true';
+      document.getElementById('toggleDark').checked = localStorage.getItem('darkMode') === 'true';
+    }
+
+    async function sendPasswordReset() {
+      try {
+        await auth.sendPasswordResetEmail(currentUser.email);
+        showToast('E-mail de redefinição enviado!', 'success');
+      } catch (err) {
+        showToast('Erro ao enviar e-mail.', 'error');
+      }
+    }
+
+    async function handleLogout() {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

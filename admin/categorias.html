@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categorias — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-placeholder" id="sidebarLogoPlaceholder">🍽️</div>
+        <img id="sidebarLogo" style="display:none" alt="Logo">
+        <div class="logo-text">
+          <h3 id="sidebarName">Meu Restaurante</h3>
+          <span>Painel Admin</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item" href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+          <a class="nav-item" href="pedidos.html"><span class="nav-icon">🛒</span> Pedidos <span class="nav-badge hidden" id="ordersBadge">0</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cardápio</div>
+          <a class="nav-item active" href="categorias.html"><span class="nav-icon">📂</span> Categorias</a>
+          <a class="nav-item" href="produtos.html"><span class="nav-icon">🍔</span> Produtos</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Configurações</div>
+          <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span> Estabelecimento</a>
+          <a class="nav-item" href="qrcode.html"><span class="nav-icon">📱</span> QR Code</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-email" id="userEmail">email@exemplo.com</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">🚪 Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h2 class="topbar-title">Categorias</h2>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm btn-icon" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+          <button class="btn btn-primary btn-sm" onclick="openCategoryModal()">+ Nova Categoria</button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>📂 Categorias do Cardápio</h3>
+              <p class="text-muted text-sm mt-1">Organize seus produtos em categorias</p>
+            </div>
+            <span class="badge badge-primary" id="categoryCount">0 categorias</span>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div id="categoriesContainer">
+              <div class="empty-state">
+                <div class="empty-icon">📂</div>
+                <h3>Nenhuma categoria criada</h3>
+                <p>Crie categorias para organizar seu cardápio</p>
+                <button class="btn btn-primary mt-2" onclick="openCategoryModal()">+ Criar Primeira Categoria</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de Categoria -->
+  <div class="modal-overlay hidden" id="categoryModal">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-header">
+        <h3 id="modalTitle">Nova Categoria</h3>
+        <button class="cart-close" onclick="closeCategoryModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryForm" onsubmit="saveCategory(event)">
+          <div class="form-group">
+            <label class="form-label">Emoji / Ícone</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px" id="emojiPicker">
+              <!-- Emojis populares -->
+            </div>
+            <input type="text" class="form-control" id="catEmoji" placeholder="🍔" maxlength="4" style="width:80px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nome da Categoria *</label>
+            <input type="text" class="form-control" id="catNome" placeholder="Ex: Lanches, Bebidas, Sobremesas..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descrição (opcional)</label>
+            <input type="text" class="form-control" id="catDescricao" placeholder="Breve descrição da categoria">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ordem de exibição</label>
+            <input type="number" class="form-control" id="catOrdem" placeholder="1" min="1" value="1">
+          </div>
+          <input type="hidden" id="catId">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeCategoryModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="document.getElementById('categoryForm').requestSubmit()" id="saveCatBtn">
+          💾 Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/admin-utils.js"></script>
+
+  <script>
+    let currentUser = null;
+    const EMOJIS = ['🍔','🍕','🍣','🥗','🍜','🍗','🥩','🌮','🌯','🥪','🍱','🍛','🍝','🥘','🍲','🥤','🍺','🍷','☕','🧃','🍰','🎂','🍩','🍪','🍫','🥗','🥙','🧆','🥚','🍳'];
+
+    requireAuth(async (user) => {
+      currentUser = user;
+      initSidebar();
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      const est = await getEstabelecimento(user.uid);
+      if (est.nome) { document.getElementById('sidebarName').textContent = est.nome; document.getElementById('userName').textContent = est.nome; }
+      if (est.logoUrl) { document.getElementById('sidebarLogo').src = est.logoUrl; document.getElementById('sidebarLogo').style.display = 'block'; document.getElementById('sidebarLogoPlaceholder').style.display = 'none'; }
+      initEmojiPicker();
+      loadCategories(user.uid);
+    });
+
+    function initEmojiPicker() {
+      const picker = document.getElementById('emojiPicker');
+      EMOJIS.forEach(e => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = e;
+        btn.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:1.2rem;transition:all 0.2s';
+        btn.onclick = () => { document.getElementById('catEmoji').value = e; };
+        btn.onmouseover = () => btn.style.background = 'var(--border)';
+        btn.onmouseout = () => btn.style.background = 'var(--bg)';
+        picker.appendChild(btn);
+      });
+    }
+
+    function loadCategories(uid) {
+      db.collection('users').doc(uid).collection('categorias')
+        .orderBy('ordem', 'asc')
+        .onSnapshot((snap) => {
+          const container = document.getElementById('categoriesContainer');
+          document.getElementById('categoryCount').textContent = snap.size + ' categoria' + (snap.size !== 1 ? 's' : '');
+
+          if (snap.empty) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon">📂</div>
+                <h3>Nenhuma categoria criada</h3>
+                <p>Crie categorias para organizar seu cardápio</p>
+                <button class="btn btn-primary mt-2" onclick="openCategoryModal()">+ Criar Primeira Categoria</button>
+              </div>`;
+            return;
+          }
+
+          let html = `<table class="data-table">
+            <thead>
+              <tr>
+                <th>Ícone</th>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Ordem</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+          snap.forEach(doc => {
+            const d = doc.data();
+            html += `
+              <tr>
+                <td style="font-size:1.5rem">${d.emoji || '📂'}</td>
+                <td><strong>${d.nome}</strong></td>
+                <td class="text-muted">${d.descricao || '—'}</td>
+                <td>${d.ordem || 1}</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" onclick="editCategory('${doc.id}', ${JSON.stringify(d).replace(/'/g, "\\'")})">✏️ Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteCategory('${doc.id}', '${d.nome}')">🗑️</button>
+                  </div>
+                </td>
+              </tr>`;
+          });
+
+          html += '</tbody></table>';
+          container.innerHTML = html;
+        });
+    }
+
+    function openCategoryModal(reset = true) {
+      if (reset) {
+        document.getElementById('modalTitle').textContent = 'Nova Categoria';
+        document.getElementById('categoryForm').reset();
+        document.getElementById('catId').value = '';
+        document.getElementById('catEmoji').value = '📂';
+      }
+      document.getElementById('categoryModal').classList.remove('hidden');
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').classList.add('hidden');
+    }
+
+    function editCategory(id, data) {
+      document.getElementById('modalTitle').textContent = 'Editar Categoria';
+      document.getElementById('catId').value = id;
+      document.getElementById('catEmoji').value = data.emoji || '📂';
+      document.getElementById('catNome').value = data.nome || '';
+      document.getElementById('catDescricao').value = data.descricao || '';
+      document.getElementById('catOrdem').value = data.ordem || 1;
+      openCategoryModal(false);
+    }
+
+    async function saveCategory(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveCatBtn');
+      btn.disabled = true;
+
+      const id = document.getElementById('catId').value;
+      const data = {
+        emoji: document.getElementById('catEmoji').value || '📂',
+        nome: document.getElementById('catNome').value.trim(),
+        descricao: document.getElementById('catDescricao').value.trim(),
+        ordem: parseInt(document.getElementById('catOrdem').value) || 1,
+        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        const ref = db.collection('users').doc(currentUser.uid).collection('categorias');
+        if (id) {
+          await ref.doc(id).update(data);
+          showToast('Categoria atualizada!', 'success');
+        } else {
+          data.criadoEm = firebase.firestore.FieldValue.serverTimestamp();
+          await ref.add(data);
+          showToast('Categoria criada!', 'success');
+        }
+        closeCategoryModal();
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+      }
+      btn.disabled = false;
+    }
+
+    function deleteCategory(id, nome) {
+      showConfirm('Excluir Categoria', `Tem certeza que deseja excluir a categoria "${nome}"? Os produtos desta categoria não serão excluídos.`, async () => {
+        try {
+          await db.collection('users').doc(currentUser.uid).collection('categorias').doc(id).delete();
+          showToast('Categoria excluída!', 'success');
+        } catch (err) {
+          showToast('Erro ao excluir: ' + err.message, 'error');
+        }
+      });
+    }
+
+    async function handleLogout() {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

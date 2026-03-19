@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 20px;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .auth-logo .logo-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--primary);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 24px rgba(230,57,70,0.4);
+    }
+
+    .auth-logo h1 {
+      color: white;
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .auth-logo p {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .auth-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 32px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      transition: var(--transition);
+      border: none;
+      background: none;
+    }
+
+    .auth-tab.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 8px rgba(230,57,70,0.4);
+    }
+
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+
+    .auth-card .form-label { color: rgba(255,255,255,0.7); }
+
+    .auth-card .form-control {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+      color: white;
+    }
+
+    .auth-card .form-control:focus {
+      background: rgba(255,255,255,0.12);
+      border-color: var(--primary);
+    }
+
+    .auth-card .form-control::placeholder { color: rgba(255,255,255,0.3); }
+
+    .auth-divider {
+      text-align: center;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.85rem;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .auth-divider::before { left: 0; }
+    .auth-divider::after { right: 0; }
+
+    .auth-error {
+      background: rgba(231,76,60,0.15);
+      border: 1px solid rgba(231,76,60,0.3);
+      color: #ff6b6b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .auth-success {
+      background: rgba(46,204,113,0.15);
+      border: 1px solid rgba(46,204,113,0.3);
+      color: #2ecc71;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .forgot-link {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.85rem;
+      text-align: right;
+      display: block;
+      margin-top: -12px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+
+    .forgot-link:hover { color: var(--primary); }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 24px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-logo">
+      <div class="logo-icon">🍽️</div>
+      <h1>Cardápio Digital</h1>
+      <p>Sistema de pedidos para restaurantes</p>
+    </div>
+
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Entrar</button>
+        <button class="auth-tab" onclick="switchTab('register')">Cadastrar</button>
+      </div>
+
+      <!-- Formulário de Login -->
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div id="loginError" class="auth-error"></div>
+        <div id="loginSuccess" class="auth-success"></div>
+
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-control" id="loginEmail" placeholder="seu@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+        </div>
+
+        <span class="forgot-link" onclick="handleForgotPassword()">Esqueci minha senha</span>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="loginBtn">
+          <span id="loginBtnText">Entrar no Painel</span>
+          <span id="loginSpinner" class="spinner spinner-sm hidden"></span>
+        </button>
+      </form>
+
+      <!-- Formulário de Cadastro -->
+      <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+        <div id="registerError" class="auth-error"></div>
+        <div id="registerSuccess" class="auth-success"></div>
+
+        <div class="form-group">
+          <label class="form-label">Nome do Estabelecimento</label>
+          <input type="text" class="form-control" id="registerName" placeholder="Ex: Restaurante do João" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" class="form-control" id="registerEmail" placeholder="seu@email.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" class="form-control" id="registerPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmar Senha</label>
+          <input type="password" class="form-control" id="registerConfirm" placeholder="Repita a senha" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="registerBtn">
+          <span id="registerBtnText">Criar Conta Grátis</span>
+          <span id="registerSpinner" class="spinner spinner-sm hidden"></span>
+        </button>
+      </form>
+    </div>
+
+    <div class="auth-footer">
+      Ao continuar, você concorda com os termos de uso.
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+
+  <script>
+    // Verificar se já está logado
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        window.location.href = 'index.html';
+      }
+    });
+
+    function switchTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+      });
+      document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+      document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+    }
+
+    function showError(formId, msg) {
+      const el = document.getElementById(formId + 'Error');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function showSuccess(formId, msg) {
+      const el = document.getElementById(formId + 'Success');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function setLoading(form, loading) {
+      const btn = document.getElementById(form + 'Btn');
+      const text = document.getElementById(form + 'BtnText');
+      const spinner = document.getElementById(form + 'Spinner');
+      btn.disabled = loading;
+      text.style.opacity = loading ? '0.6' : '1';
+      spinner.classList.toggle('hidden', !loading);
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      setLoading('login', true);
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        window.location.href = 'index.html';
+      } catch (err) {
+        const msgs = {
+          'auth/user-not-found': 'E-mail não encontrado.',
+          'auth/wrong-password': 'Senha incorreta.',
+          'auth/invalid-email': 'E-mail inválido.',
+          'auth/too-many-requests': 'Muitas tentativas. Tente novamente em breve.',
+          'auth/invalid-credential': 'Credenciais inválidas. Verifique e-mail e senha.'
+        };
+        showError('login', msgs[err.code] || 'Erro ao fazer login: ' + err.message);
+        setLoading('login', false);
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('registerName').value.trim();
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirm = document.getElementById('registerConfirm').value;
+
+      if (password !== confirm) {
+        showError('register', 'As senhas não coincidem.');
+        return;
+      }
+
+      setLoading('register', true);
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        // Criar documento do estabelecimento
+        await db.collection('users').doc(cred.user.uid).set({
+          estabelecimento: {
+            nome: name,
+            email: email,
+            whatsapp: '',
+            endereco: '',
+            logoUrl: '',
+            criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+          }
+        });
+        window.location.href = 'index.html';
+      } catch (err) {
+        const msgs = {
+          'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
+          'auth/invalid-email': 'E-mail inválido.',
+          'auth/weak-password': 'Senha muito fraca. Use pelo menos 6 caracteres.'
+        };
+        showError('register', msgs[err.code] || 'Erro ao cadastrar: ' + err.message);
+        setLoading('register', false);
+      }
+    }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('loginEmail').value;
+      if (!email) {
+        showError('login', 'Digite seu e-mail primeiro.');
+        return;
+      }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showSuccess('login', 'E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+      } catch (err) {
+        showError('login', 'Erro ao enviar e-mail de recuperação.');
+      }
+    }
+  </script>
+</body>
+</html>

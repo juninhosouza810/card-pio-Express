@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+  <link rel="stylesheet" href="../assets/css/print.css">
+  <style>
+    /* Kanban de pedidos */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .kanban-column {
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .kanban-header {
+      padding: 14px 18px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kanban-header.novo { background: rgba(230,57,70,0.08); color: var(--danger); }
+    .kanban-header.preparo { background: rgba(243,156,18,0.08); color: var(--warning); }
+    .kanban-header.entregue { background: rgba(46,204,113,0.08); color: var(--success); }
+
+    .kanban-count {
+      background: currentColor;
+      color: white;
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      opacity: 0.9;
+    }
+
+    .kanban-body {
+      padding: 12px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .kanban-empty {
+      text-align: center;
+      padding: 30px 10px;
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+
+    /* Lista de pedidos (modo lista) */
+    .orders-list-view { display: none; }
+
+    /* Toggle view */
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .view-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: none;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      transition: var(--transition);
+    }
+
+    .view-btn.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      box-shadow: var(--shadow);
+    }
+
+    @media (max-width: 900px) {
+      .kanban-board { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-placeholder" id="sidebarLogoPlaceholder">🍽️</div>
+        <img id="sidebarLogo" style="display:none" alt="Logo">
+        <div class="logo-text">
+          <h3 id="sidebarName">Meu Restaurante</h3>
+          <span>Painel Admin</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item" href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+          <a class="nav-item active" href="pedidos.html"><span class="nav-icon">🛒</span> Pedidos <span class="nav-badge" id="ordersBadge" style="display:none">0</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cardápio</div>
+          <a class="nav-item" href="categorias.html"><span class="nav-icon">📂</span> Categorias</a>
+          <a class="nav-item" href="produtos.html"><span class="nav-icon">🍔</span> Produtos</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Configurações</div>
+          <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span> Estabelecimento</a>
+          <a class="nav-item" href="qrcode.html"><span class="nav-icon">📱</span> QR Code</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-email" id="userEmail">email@exemplo.com</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">🚪 Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h2 class="topbar-title">Pedidos em Tempo Real</h2>
+          <span class="badge badge-success" id="liveIndicator" style="font-size:0.7rem">🟢 AO VIVO</span>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm btn-icon" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+          <div class="view-toggle">
+            <button class="view-btn active" id="btnKanban" onclick="setView('kanban')">⬛ Kanban</button>
+            <button class="view-btn" id="btnList" onclick="setView('list')">☰ Lista</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- Filtros e stats -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px">
+          <div class="status-filters">
+            <button class="status-filter-btn active" onclick="filterByStatus('todos', this)">Todos</button>
+            <button class="status-filter-btn" onclick="filterByStatus('novo', this)">🔴 Novos</button>
+            <button class="status-filter-btn" onclick="filterByStatus('preparo', this)">🟡 Em Preparo</button>
+            <button class="status-filter-btn" onclick="filterByStatus('entregue', this)">🟢 Entregues</button>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <input type="date" class="form-control" id="dateFilter" style="max-width:160px" onchange="applyDateFilter()">
+            <button class="btn btn-ghost btn-sm" onclick="clearDateFilter()">Limpar</button>
+          </div>
+        </div>
+
+        <!-- Stats rápidas -->
+        <div class="stats-grid" style="margin-bottom:20px;grid-template-columns:repeat(4,1fr)">
+          <div class="stat-card">
+            <div class="stat-icon red">🔴</div>
+            <div><div class="stat-value" id="countNovo">0</div><div class="stat-label">Novos</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">🟡</div>
+            <div><div class="stat-value" id="countPreparo">0</div><div class="stat-label">Em Preparo</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">🟢</div>
+            <div><div class="stat-value" id="countEntregue">0</div><div class="stat-label">Entregues</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">💰</div>
+            <div><div class="stat-value" id="totalFaturamento">R$0</div><div class="stat-label">Faturamento</div></div>
+          </div>
+        </div>
+
+        <!-- Kanban View -->
+        <div id="kanbanView">
+          <div class="kanban-board">
+            <div class="kanban-column">
+              <div class="kanban-header novo">
+                🔴 Novos Pedidos
+                <span class="kanban-count" id="kanbanCountNovo">0</span>
+              </div>
+              <div class="kanban-body" id="kanbanNovo">
+                <div class="kanban-empty">Nenhum pedido novo</div>
+              </div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-header preparo">
+                🟡 Em Preparo
+                <span class="kanban-count" id="kanbanCountPreparo">0</span>
+              </div>
+              <div class="kanban-body" id="kanbanPreparo">
+                <div class="kanban-empty">Nenhum em preparo</div>
+              </div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-header entregue">
+                🟢 Entregues
+                <span class="kanban-count" id="kanbanCountEntregue">0</span>
+              </div>
+              <div class="kanban-body" id="kanbanEntregue">
+                <div class="kanban-empty">Nenhum entregue</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listView" class="orders-list-view">
+          <div class="card">
+            <div class="card-body" style="padding:0">
+              <div id="ordersListContainer">
+                <div class="empty-state">
+                  <div class="empty-icon">🛒</div>
+                  <h3>Nenhum pedido</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de Comanda -->
+  <div class="modal-overlay hidden" id="comandaModal">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header no-print">
+        <h3>🧾 Comanda</h3>
+        <button class="cart-close" onclick="closeComanda()">✕</button>
+      </div>
+      <div class="modal-body" style="padding:16px">
+        <div id="comandaContent" class="comanda-preview"></div>
+      </div>
+      <div class="modal-footer no-print">
+        <button class="btn btn-ghost" onclick="closeComanda()">Fechar</button>
+        <button class="btn btn-primary" onclick="printComanda()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/admin-utils.js"></script>
+
+  <script>
+    let currentUser = null;
+    let estabelecimento = {};
+    let allOrders = [];
+    let currentStatusFilter = 'todos';
+    let currentView = 'kanban';
+    let currentDateFilter = null;
+    let unsubscribeOrders = null;
+    let knownOrderIds = new Set();
+    let isFirstLoad = true;
+
+    requireAuth(async (user) => {
+      currentUser = user;
+      initSidebar();
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      estabelecimento = await getEstabelecimento(user.uid);
+      if (estabelecimento.nome) { document.getElementById('sidebarName').textContent = estabelecimento.nome; document.getElementById('userName').textContent = estabelecimento.nome; }
+      if (estabelecimento.logoUrl) { document.getElementById('sidebarLogo').src = estabelecimento.logoUrl; document.getElementById('sidebarLogo').style.display = 'block'; document.getElementById('sidebarLogoPlaceholder').style.display = 'none'; }
+
+      // Definir data de hoje como padrão
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dateFilter').value = today;
+      currentDateFilter = today;
+
+      startOrdersListener(user.uid);
+    });
+
+    function startOrdersListener(uid) {
+      if (unsubscribeOrders) unsubscribeOrders();
+
+      let query = db.collection('users').doc(uid).collection('pedidos')
+        .orderBy('timestamp', 'desc');
+
+      if (currentDateFilter) {
+        const start = new Date(currentDateFilter + 'T00:00:00');
+        const end = new Date(currentDateFilter + 'T23:59:59');
+        query = query
+          .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(start))
+          .where('timestamp', '<=', firebase.firestore.Timestamp.fromDate(end));
+      }
+
+      unsubscribeOrders = query.onSnapshot((snap) => {
+        const newOrders = [];
+        snap.forEach(doc => newOrders.push({ id: doc.id, ...doc.data() }));
+
+        // Detectar novos pedidos (não na primeira carga)
+        if (!isFirstLoad) {
+          newOrders.forEach(order => {
+            if (!knownOrderIds.has(order.id) && order.status === 'novo') {
+              handleNewOrder(order);
+            }
+          });
+        }
+
+        knownOrderIds = new Set(newOrders.map(o => o.id));
+        allOrders = newOrders;
+        isFirstLoad = false;
+
+        renderOrders();
+        updateStats();
+      });
+    }
+
+    function handleNewOrder(order) {
+      // Som de notificação
+      if (localStorage.getItem('pref_sound') !== 'false') {
+        playNotificationSound();
+      }
+
+      // Toast
+      showToast(`🔴 Novo pedido! Mesa ${order.mesa}`, 'error', 5000);
+
+      // Impressão automática
+      if (localStorage.getItem('pref_autoPrint') === 'true') {
+        setTimeout(() => printOrderComanda(order), 1000);
+      }
+    }
+
+    function updateStats() {
+      const novo = allOrders.filter(o => o.status === 'novo').length;
+      const preparo = allOrders.filter(o => o.status === 'preparo').length;
+      const entregue = allOrders.filter(o => o.status === 'entregue').length;
+      const total = allOrders.filter(o => o.status !== 'cancelado').reduce((s, o) => s + (o.total || 0), 0);
+
+      document.getElementById('countNovo').textContent = novo;
+      document.getElementById('countPreparo').textContent = preparo;
+      document.getElementById('countEntregue').textContent = entregue;
+      document.getElementById('totalFaturamento').textContent = formatPrice(total).replace('R$\u00a0', 'R$');
+      document.getElementById('kanbanCountNovo').textContent = novo;
+      document.getElementById('kanbanCountPreparo').textContent = preparo;
+      document.getElementById('kanbanCountEntregue').textContent = entregue;
+
+      updateOrderBadge(novo);
+    }
+
+    function getFilteredOrders() {
+      if (currentStatusFilter === 'todos') return allOrders;
+      return allOrders.filter(o => o.status === currentStatusFilter);
+    }
+
+    function renderOrders() {
+      if (currentView === 'kanban') renderKanban();
+      else renderList();
+    }
+
+    function renderKanban() {
+      const statuses = ['novo', 'preparo', 'entregue'];
+      statuses.forEach(status => {
+        const container = document.getElementById('kanban' + status.charAt(0).toUpperCase() + status.slice(1));
+        const orders = allOrders.filter(o => o.status === status);
+
+        if (orders.length === 0) {
+          const labels = { novo: 'Nenhum pedido novo', preparo: 'Nenhum em preparo', entregue: 'Nenhum entregue' };
+          container.innerHTML = `<div class="kanban-empty">${labels[status]}</div>`;
+          return;
+        }
+
+        container.innerHTML = orders.map(o => renderOrderCard(o)).join('');
+      });
+    }
+
+    function renderList() {
+      const container = document.getElementById('ordersListContainer');
+      const orders = getFilteredOrders();
+
+      if (orders.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><h3>Nenhum pedido</h3></div>`;
+        return;
+      }
+
+      let html = `<table class="data-table">
+        <thead>
+          <tr>
+            <th>Mesa</th>
+            <th>Itens</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Horário</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      orders.forEach(o => {
+        const st = ORDER_STATUS[o.status] || ORDER_STATUS.novo;
+        html += `
+          <tr style="${o.status === 'novo' ? 'background:rgba(230,57,70,0.04)' : ''}">
+            <td><strong style="font-size:1.1rem">Mesa ${o.mesa}</strong></td>
+            <td>${(o.itens || []).length} item(s)</td>
+            <td><strong class="text-primary-color">${formatPrice(o.total)}</strong></td>
+            <td><span class="badge badge-${st.color}">${st.icon} ${st.label}</span></td>
+            <td class="text-muted text-sm">${timeAgo(o.timestamp)}</td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                ${getActionButtons(o)}
+                <button class="btn btn-ghost btn-sm" onclick="viewComanda('${o.id}')">🧾</button>
+              </div>
+            </td>
+          </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function renderOrderCard(order) {
+      const st = ORDER_STATUS[order.status] || ORDER_STATUS.novo;
+      const isNew = order.status === 'novo';
+
+      return `
+        <div class="order-card ${st.class} ${isNew ? 'pulse' : ''}">
+          <div class="order-card-header ${st.class}">
+            <div class="order-mesa">
+              ${st.icon} Mesa ${order.mesa}
+            </div>
+            <div class="order-time">${timeAgo(order.timestamp)}</div>
+          </div>
+          <div class="order-card-body">
+            <div class="order-items">
+              ${(order.itens || []).map(item => `
+                <div class="order-item">
+                  <span class="order-item-qty">${item.qty}x</span>
+                  <span class="order-item-name">${item.nome}</span>
+                  <span class="order-item-price">${formatPrice(item.subtotal)}</span>
+                </div>`).join('')}
+            </div>
+            ${order.observacao ? `<div class="order-obs">📝 ${order.observacao}</div>` : ''}
+            <div class="order-total">
+              <span>Total</span>
+              <span class="text-primary-color">${formatPrice(order.total)}</span>
+            </div>
+          </div>
+          <div class="order-card-footer">
+            ${getActionButtons(order)}
+            <button class="btn btn-ghost btn-sm" onclick="viewComanda('${order.id}')">🧾 Comanda</button>
+          </div>
+        </div>`;
+    }
+
+    function getActionButtons(order) {
+      if (order.status === 'novo') {
+        return `
+          <button class="btn btn-warning btn-sm" onclick="updateOrderStatus('${order.id}', 'preparo')">🟡 Aceitar</button>
+          <button class="btn btn-danger btn-sm" onclick="updateOrderStatus('${order.id}', 'cancelado')">✕</button>`;
+      } else if (order.status === 'preparo') {
+        return `<button class="btn btn-success btn-sm" onclick="updateOrderStatus('${order.id}', 'entregue')">✅ Entregue</button>`;
+      } else if (order.status === 'entregue') {
+        return `<span class="badge badge-success">✅ Finalizado</span>`;
+      } else if (order.status === 'cancelado') {
+        return `<span class="badge badge-secondary">⚫ Cancelado</span>`;
+      }
+      return '';
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+      try {
+        await db.collection('users').doc(currentUser.uid).collection('pedidos')
+          .doc(orderId).update({ status: newStatus, atualizadoEm: firebase.firestore.FieldValue.serverTimestamp() });
+
+        const labels = { preparo: 'Em preparo', entregue: 'Entregue', cancelado: 'Cancelado' };
+        showToast(`Pedido marcado como: ${labels[newStatus] || newStatus}`, 'success');
+      } catch (err) {
+        showToast('Erro ao atualizar pedido: ' + err.message, 'error');
+      }
+    }
+
+    // ============================================================
+    // COMANDA
+    // ============================================================
+
+    function viewComanda(orderId) {
+      const order = allOrders.find(o => o.id === orderId);
+      if (!order) return;
+      renderComandaContent(order);
+      document.getElementById('comandaModal').classList.remove('hidden');
+    }
+
+    function printOrderComanda(order) {
+      renderComandaContent(order);
+      printComanda();
+    }
+
+    function renderComandaContent(order) {
+      const date = order.timestamp ? (order.timestamp.toDate ? order.timestamp.toDate() : new Date(order.timestamp)) : new Date();
+      const dateStr = new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }).format(date);
+
+      const html = `
+        <div class="comanda-header">
+          <div class="rest-name">${estabelecimento.nome || 'Restaurante'}</div>
+          ${estabelecimento.endereco ? `<div class="rest-address">${estabelecimento.endereco}</div>` : ''}
+          ${estabelecimento.whatsapp ? `<div class="rest-whatsapp">WhatsApp: ${estabelecimento.whatsapp}</div>` : ''}
+        </div>
+
+        <hr class="comanda-divider">
+        <div class="comanda-mesa">MESA ${order.mesa}</div>
+        <div class="comanda-datetime">${dateStr}</div>
+        <hr class="comanda-divider">
+
+        <div class="comanda-items">
+          ${(order.itens || []).map(item => `
+            <div class="comanda-item">
+              <span class="comanda-item-name">${item.nome}</span>
+              <span class="comanda-item-qty">${item.qty}x</span>
+              <span class="comanda-item-price">${formatPrice(item.subtotal)}</span>
+            </div>`).join('')}
+        </div>
+
+        ${order.observacao ? `
+          <hr class="comanda-divider">
+          <div class="comanda-obs">OBS: ${order.observacao}</div>` : ''}
+
+        <div class="comanda-total">
+          <span>TOTAL</span>
+          <span>${formatPrice(order.total)}</span>
+        </div>
+
+        <div class="comanda-footer">
+          Obrigado pela preferência!
+        </div>
+        <div class="comanda-order-id">Pedido #${order.id.substring(0, 8).toUpperCase()}</div>`;
+
+      document.getElementById('comandaContent').innerHTML = html;
+    }
+
+    function closeComanda() {
+      document.getElementById('comandaModal').classList.add('hidden');
+    }
+
+    function printComanda() {
+      const content = document.getElementById('comandaContent').innerHTML;
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Comanda</title>
+          <link rel="stylesheet" href="../assets/css/print.css">
+          <style>
+            body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0; padding: 4mm; }
+            .comanda-preview { border: none; padding: 0; }
+          </style>
+        </head>
+        <body>
+          <div class="comanda-preview">${content}</div>
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body>
+        </html>`);
+      printWindow.document.close();
+    }
+
+    // ============================================================
+    // FILTROS E VIEWS
+    // ============================================================
+
+    function filterByStatus(status, btn) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderOrders();
+    }
+
+    function setView(view) {
+      currentView = view;
+      document.getElementById('kanbanView').style.display = view === 'kanban' ? 'block' : 'none';
+      document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+      document.getElementById('btnKanban').classList.toggle('active', view === 'kanban');
+      document.getElementById('btnList').classList.toggle('active', view === 'list');
+      renderOrders();
+    }
+
+    function applyDateFilter() {
+      currentDateFilter = document.getElementById('dateFilter').value || null;
+      isFirstLoad = true;
+      startOrdersListener(currentUser.uid);
+    }
+
+    function clearDateFilter() {
+      document.getElementById('dateFilter').value = '';
+      currentDateFilter = null;
+      isFirstLoad = true;
+      startOrdersListener(currentUser.uid);
+    }
+
+    async function handleLogout() {
+      if (unsubscribeOrders) unsubscribeOrders();
+      await auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

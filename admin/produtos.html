@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-placeholder" id="sidebarLogoPlaceholder">🍽️</div>
+        <img id="sidebarLogo" style="display:none" alt="Logo">
+        <div class="logo-text">
+          <h3 id="sidebarName">Meu Restaurante</h3>
+          <span>Painel Admin</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item" href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+          <a class="nav-item" href="pedidos.html"><span class="nav-icon">🛒</span> Pedidos <span class="nav-badge hidden" id="ordersBadge">0</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cardápio</div>
+          <a class="nav-item" href="categorias.html"><span class="nav-icon">📂</span> Categorias</a>
+          <a class="nav-item active" href="produtos.html"><span class="nav-icon">🍔</span> Produtos</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Configurações</div>
+          <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span> Estabelecimento</a>
+          <a class="nav-item" href="qrcode.html"><span class="nav-icon">📱</span> QR Code</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-email" id="userEmail">email@exemplo.com</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">🚪 Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h2 class="topbar-title">Produtos</h2>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm btn-icon" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+          <button class="btn btn-primary btn-sm" onclick="openProductModal()">+ Novo Produto</button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- Filtros -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-body" style="padding:16px">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+              <input type="text" class="form-control" id="searchInput" placeholder="🔍 Buscar produto..." style="max-width:280px" oninput="filterProducts()">
+              <select class="form-control" id="filterCategory" style="max-width:200px" onchange="filterProducts()">
+                <option value="">Todas as categorias</option>
+              </select>
+              <select class="form-control" id="filterStatus" style="max-width:160px" onchange="filterProducts()">
+                <option value="">Todos os status</option>
+                <option value="true">Ativos</option>
+                <option value="false">Inativos</option>
+              </select>
+              <span class="badge badge-primary" id="productCount">0 produtos</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div id="productsContainer">
+              <div class="empty-state">
+                <div class="empty-icon">🍔</div>
+                <h3>Nenhum produto cadastrado</h3>
+                <p>Adicione produtos ao seu cardápio</p>
+                <button class="btn btn-primary mt-2" onclick="openProductModal()">+ Adicionar Produto</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de Produto -->
+  <div class="modal-overlay hidden" id="productModal">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Novo Produto</h3>
+        <button class="cart-close" onclick="closeProductModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm" onsubmit="saveProduct(event)">
+          <!-- Imagem -->
+          <div class="form-group">
+            <label class="form-label">Foto do Produto</label>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('productImageInput').click()">
+              <img id="productImagePreview" style="display:none;max-height:160px;border-radius:8px;object-fit:cover" alt="Preview">
+              <div id="uploadPlaceholder">
+                <div style="font-size:2.5rem;margin-bottom:8px">📷</div>
+                <div class="fw-semibold">Clique para adicionar foto</div>
+                <div class="text-muted text-sm">PNG, JPG ou WebP. Máx. 5MB</div>
+              </div>
+            </div>
+            <input type="file" id="productImageInput" accept="image/*" style="display:none" onchange="previewProductImage(event)">
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Nome do Produto *</label>
+              <input type="text" class="form-control" id="prodNome" placeholder="Ex: X-Burguer Especial" required>
+            </div>
+
+            <div class="form-group" style="grid-column:1/-1">
+              <label class="form-label">Descrição</label>
+              <textarea class="form-control" id="prodDescricao" placeholder="Ingredientes, modo de preparo..." rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Preço *</label>
+              <input type="number" class="form-control" id="prodPreco" placeholder="0,00" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Categoria *</label>
+              <select class="form-control" id="prodCategoria" required>
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Ordem de exibição</label>
+              <input type="number" class="form-control" id="prodOrdem" placeholder="1" min="1" value="1">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <div style="display:flex;align-items:center;gap:12px;padding-top:8px">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="prodAtivo" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="text-sm fw-semibold" id="prodAtivoLabel">Produto Ativo</span>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="prodId">
+          <input type="hidden" id="prodImageUrl">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeProductModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="document.getElementById('productForm').requestSubmit()" id="saveProdBtn">
+          💾 Salvar Produto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/admin-utils.js"></script>
+
+  <script>
+    let currentUser = null;
+    let allProducts = [];
+    let allCategories = [];
+    let productImageFile = null;
+
+    requireAuth(async (user) => {
+      currentUser = user;
+      initSidebar();
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      const est = await getEstabelecimento(user.uid);
+      if (est.nome) { document.getElementById('sidebarName').textContent = est.nome; document.getElementById('userName').textContent = est.nome; }
+      if (est.logoUrl) { document.getElementById('sidebarLogo').src = est.logoUrl; document.getElementById('sidebarLogo').style.display = 'block'; document.getElementById('sidebarLogoPlaceholder').style.display = 'none'; }
+      loadCategories(user.uid);
+      loadProducts(user.uid);
+    });
+
+    // Toggle label
+    document.getElementById('prodAtivo').addEventListener('change', function() {
+      document.getElementById('prodAtivoLabel').textContent = this.checked ? 'Produto Ativo' : 'Produto Inativo';
+    });
+
+    function loadCategories(uid) {
+      db.collection('users').doc(uid).collection('categorias')
+        .orderBy('ordem', 'asc')
+        .onSnapshot((snap) => {
+          allCategories = [];
+          const filterSel = document.getElementById('filterCategory');
+          const prodSel = document.getElementById('prodCategoria');
+          const filterVal = filterSel.value;
+          const prodVal = prodSel.value;
+
+          filterSel.innerHTML = '<option value="">Todas as categorias</option>';
+          prodSel.innerHTML = '<option value="">Selecione...</option>';
+
+          snap.forEach(doc => {
+            const d = doc.data();
+            allCategories.push({ id: doc.id, ...d });
+            const opt1 = new Option(`${d.emoji || ''} ${d.nome}`, doc.id);
+            const opt2 = new Option(`${d.emoji || ''} ${d.nome}`, doc.id);
+            filterSel.appendChild(opt1);
+            prodSel.appendChild(opt2);
+          });
+
+          if (filterVal) filterSel.value = filterVal;
+          if (prodVal) prodSel.value = prodVal;
+        });
+    }
+
+    function loadProducts(uid) {
+      db.collection('users').doc(uid).collection('produtos')
+        .orderBy('ordem', 'asc')
+        .onSnapshot((snap) => {
+          allProducts = [];
+          snap.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
+          renderProducts(allProducts);
+        });
+    }
+
+    function filterProducts() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const catFilter = document.getElementById('filterCategory').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+
+      const filtered = allProducts.filter(p => {
+        const matchSearch = !search || p.nome.toLowerCase().includes(search) || (p.descricao || '').toLowerCase().includes(search);
+        const matchCat = !catFilter || p.categoriaId === catFilter;
+        const matchStatus = statusFilter === '' || String(p.ativo) === statusFilter;
+        return matchSearch && matchCat && matchStatus;
+      });
+
+      renderProducts(filtered);
+    }
+
+    function renderProducts(products) {
+      const container = document.getElementById('productsContainer');
+      document.getElementById('productCount').textContent = products.length + ' produto' + (products.length !== 1 ? 's' : '');
+
+      if (products.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🍔</div>
+            <h3>Nenhum produto encontrado</h3>
+            <p>Tente ajustar os filtros ou adicione novos produtos</p>
+            <button class="btn btn-primary mt-2" onclick="openProductModal()">+ Adicionar Produto</button>
+          </div>`;
+        return;
+      }
+
+      let html = `<table class="data-table">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Preço</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+      products.forEach(p => {
+        const cat = allCategories.find(c => c.id === p.categoriaId);
+        const catName = cat ? `${cat.emoji || ''} ${cat.nome}` : '—';
+        html += `
+          <tr>
+            <td>
+              ${p.imagemUrl
+                ? `<img src="${p.imagemUrl}" class="product-thumb" alt="${p.nome}">`
+                : `<div class="product-thumb-placeholder">🍽️</div>`}
+            </td>
+            <td>
+              <div class="fw-semibold">${p.nome}</div>
+              ${p.descricao ? `<div class="text-muted text-sm" style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.descricao}</div>` : ''}
+            </td>
+            <td class="text-sm">${catName}</td>
+            <td><strong class="text-primary-color">${formatPrice(p.preco)}</strong></td>
+            <td>
+              <span class="badge badge-${p.ativo ? 'success' : 'secondary'}">
+                ${p.ativo ? '✅ Ativo' : '⏸️ Inativo'}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" onclick="editProduct('${p.id}')">✏️ Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}', '${p.nome.replace(/'/g, "\\'")}')">🗑️</button>
+              </div>
+            </td>
+          </tr>`;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function openProductModal(reset = true) {
+      if (reset) {
+        document.getElementById('productModalTitle').textContent = 'Novo Produto';
+        document.getElementById('productForm').reset();
+        document.getElementById('prodId').value = '';
+        document.getElementById('prodImageUrl').value = '';
+        document.getElementById('prodAtivo').checked = true;
+        document.getElementById('prodAtivoLabel').textContent = 'Produto Ativo';
+        document.getElementById('productImagePreview').style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+        productImageFile = null;
+      }
+      document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.add('hidden');
+    }
+
+    function previewProductImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Imagem muito grande. Máximo 5MB.', 'error');
+        return;
+      }
+      productImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('productImagePreview').src = e.target.result;
+        document.getElementById('productImagePreview').style.display = 'block';
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function editProduct(id) {
+      const p = allProducts.find(p => p.id === id);
+      if (!p) return;
+
+      document.getElementById('productModalTitle').textContent = 'Editar Produto';
+      document.getElementById('prodId').value = id;
+      document.getElementById('prodNome').value = p.nome || '';
+      document.getElementById('prodDescricao').value = p.descricao || '';
+      document.getElementById('prodPreco').value = p.preco || '';
+      document.getElementById('prodCategoria').value = p.categoriaId || '';
+      document.getElementById('prodOrdem').value = p.ordem || 1;
+      document.getElementById('prodAtivo').checked = p.ativo !== false;
+      document.getElementById('prodAtivoLabel').textContent = p.ativo !== false ? 'Produto Ativo' : 'Produto Inativo';
+      document.getElementById('prodImageUrl').value = p.imagemUrl || '';
+      productImageFile = null;
+
+      if (p.imagemUrl) {
+        document.getElementById('productImagePreview').src = p.imagemUrl;
+        document.getElementById('productImagePreview').style.display = 'block';
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+      } else {
+        document.getElementById('productImagePreview').style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.display = 'block';
+      }
+
+      openProductModal(false);
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveProdBtn');
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      try {
+        let imagemUrl = document.getElementById('prodImageUrl').value;
+
+        if (productImageFile) {
+          showLoading('Enviando imagem...');
+          const filename = `${Date.now()}_${productImageFile.name}`;
+          imagemUrl = await uploadImage(productImageFile, `produtos/${currentUser.uid}/${filename}`);
+          hideLoading();
+        }
+
+        const id = document.getElementById('prodId').value;
+        const catId = document.getElementById('prodCategoria').value;
+        const cat = allCategories.find(c => c.id === catId);
+
+        const data = {
+          nome: document.getElementById('prodNome').value.trim(),
+          descricao: document.getElementById('prodDescricao').value.trim(),
+          preco: parseFloat(document.getElementById('prodPreco').value) || 0,
+          categoriaId: catId,
+          categoriaNome: cat ? cat.nome : '',
+          categoriaEmoji: cat ? (cat.emoji || '') : '',
+          ordem: parseInt(document.getElementById('prodOrdem').value) || 1,
+          ativo: document.getElementById('prodAtivo').checked,
+          imagemUrl: imagemUrl || '',
+          atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        const ref = db.collection('users').doc(currentUser.uid).collection('produtos');
+        if (id) {
+          await ref.doc(id).update(data);
+          showToast('Produto atualizado!', 'success');
+        } else {
+          data.criadoEm = firebase.firestore.FieldValue.serverTimestamp();
+          await ref.add(data);
+          showToast('Produto criado!', 'success');
+        }
+        closeProductModal();
+      } catch (err) {
+        showToast('Erro: ' + err.message, 'error');
+        hideLoading();
+      }
+
+      btn.disabled = false;
+      btn.textContent = '💾 Salvar Produto';
+    }
+
+    function deleteProduct(id, nome) {
+      showConfirm('Excluir Produto', `Tem certeza que deseja excluir "${nome}"?`, async () => {
+        try {
+          await db.collection('users').doc(currentUser.uid).collection('produtos').doc(id).delete();
+          showToast('Produto excluído!', 'success');
+        } catch (err) {
+          showToast('Erro ao excluir: ' + err.message, 'error');
+        }
+      });
+    }
+
+    async function handleLogout() {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

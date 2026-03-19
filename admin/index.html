@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-placeholder" id="sidebarLogoPlaceholder">🍽️</div>
+        <img id="sidebarLogo" style="display:none" alt="Logo">
+        <div class="logo-text">
+          <h3 id="sidebarName">Meu Restaurante</h3>
+          <span>Painel Admin</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item active" href="index.html">
+            <span class="nav-icon">📊</span> Dashboard
+          </a>
+          <a class="nav-item" href="pedidos.html">
+            <span class="nav-icon">🛒</span> Pedidos
+            <span class="nav-badge hidden" id="ordersBadge">0</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Cardápio</div>
+          <a class="nav-item" href="categorias.html">
+            <span class="nav-icon">📂</span> Categorias
+          </a>
+          <a class="nav-item" href="produtos.html">
+            <span class="nav-icon">🍔</span> Produtos
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Configurações</div>
+          <a class="nav-item" href="configuracoes.html">
+            <span class="nav-icon">⚙️</span> Estabelecimento
+          </a>
+          <a class="nav-item" href="qrcode.html">
+            <span class="nav-icon">📱</span> QR Code
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-email" id="userEmail">email@exemplo.com</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">
+          🚪 Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h2 class="topbar-title">Dashboard</h2>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm btn-icon" id="darkModeBtn" onclick="toggleDarkMode()" title="Modo escuro">🌙</button>
+          <a href="pedidos.html" class="btn btn-primary btn-sm">
+            🛒 Ver Pedidos
+          </a>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon red">🛒</div>
+            <div>
+              <div class="stat-value" id="statPedidosHoje">—</div>
+              <div class="stat-label">Pedidos Hoje</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">💰</div>
+            <div>
+              <div class="stat-value" id="statFaturamento">—</div>
+              <div class="stat-label">Faturamento Hoje</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">🍔</div>
+            <div>
+              <div class="stat-value" id="statProdutos">—</div>
+              <div class="stat-label">Produtos Ativos</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">⏳</div>
+            <div>
+              <div class="stat-value" id="statEmPreparo">—</div>
+              <div class="stat-label">Em Preparo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pedidos Recentes -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3>Pedidos Recentes</h3>
+              <p class="text-muted text-sm mt-1">Últimos 10 pedidos do dia</p>
+            </div>
+            <a href="pedidos.html" class="btn btn-outline btn-sm">Ver Todos</a>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div id="recentOrdersTable">
+              <div class="empty-state">
+                <div class="empty-icon">🛒</div>
+                <h3>Nenhum pedido ainda</h3>
+                <p>Os pedidos aparecerão aqui em tempo real</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Link do cardápio -->
+        <div class="card mt-3">
+          <div class="card-body">
+            <div class="d-flex align-center justify-between" style="flex-wrap:wrap;gap:12px">
+              <div>
+                <h3>🔗 Link do Cardápio</h3>
+                <p class="text-muted text-sm mt-1">Compartilhe este link com seus clientes</p>
+                <div id="cardapioLink" style="margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:8px;font-family:monospace;font-size:0.85rem;word-break:break-all;border:1px solid var(--border)">
+                  Carregando...
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-shrink:0">
+                <button class="btn btn-outline btn-sm" onclick="copyCardapioLink()">📋 Copiar</button>
+                <a href="qrcode.html" class="btn btn-primary btn-sm">📱 QR Code</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/admin-utils.js"></script>
+
+  <script>
+    let currentUser = null;
+
+    requireAuth(async (user) => {
+      currentUser = user;
+      initSidebar();
+      updateUserInfo(user);
+      await loadEstabelecimento(user.uid);
+      loadDashboardStats(user.uid);
+      loadRecentOrders(user.uid);
+      updateCardapioLink(user.uid);
+    });
+
+    function updateUserInfo(user) {
+      document.getElementById('userName').textContent = user.displayName || 'Usuário';
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = (user.email || 'U')[0].toUpperCase();
+    }
+
+    async function loadEstabelecimento(uid) {
+      const est = await getEstabelecimento(uid);
+      if (est.nome) {
+        document.getElementById('sidebarName').textContent = est.nome;
+        document.getElementById('userName').textContent = est.nome;
+      }
+      if (est.logoUrl) {
+        document.getElementById('sidebarLogo').src = est.logoUrl;
+        document.getElementById('sidebarLogo').style.display = 'block';
+        document.getElementById('sidebarLogoPlaceholder').style.display = 'none';
+      }
+    }
+
+    function loadDashboardStats(uid) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Pedidos hoje
+      db.collection('users').doc(uid).collection('pedidos')
+        .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(today))
+        .onSnapshot((snap) => {
+          let total = 0, emPreparo = 0;
+          snap.forEach(doc => {
+            const d = doc.data();
+            total += d.total || 0;
+            if (d.status === 'preparo') emPreparo++;
+          });
+          document.getElementById('statPedidosHoje').textContent = snap.size;
+          document.getElementById('statFaturamento').textContent = formatPrice(total);
+          document.getElementById('statEmPreparo').textContent = emPreparo;
+          updateOrderBadge(snap.docs.filter(d => d.data().status === 'novo').length);
+        });
+
+      // Produtos ativos
+      db.collection('users').doc(uid).collection('produtos')
+        .where('ativo', '==', true)
+        .onSnapshot((snap) => {
+          document.getElementById('statProdutos').textContent = snap.size;
+        });
+    }
+
+    function loadRecentOrders(uid) {
+      db.collection('users').doc(uid).collection('pedidos')
+        .orderBy('timestamp', 'desc')
+        .limit(10)
+        .onSnapshot((snap) => {
+          const container = document.getElementById('recentOrdersTable');
+          if (snap.empty) {
+            container.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon">🛒</div>
+                <h3>Nenhum pedido ainda</h3>
+                <p>Os pedidos aparecerão aqui em tempo real</p>
+              </div>`;
+            return;
+          }
+
+          let html = `<table class="data-table">
+            <thead>
+              <tr>
+                <th>Mesa</th>
+                <th>Itens</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Horário</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+          snap.forEach(doc => {
+            const d = doc.data();
+            const st = ORDER_STATUS[d.status] || ORDER_STATUS.novo;
+            html += `
+              <tr>
+                <td><strong>Mesa ${d.mesa}</strong></td>
+                <td>${(d.itens || []).length} item(s)</td>
+                <td><strong>${formatPrice(d.total)}</strong></td>
+                <td><span class="badge badge-${st.color}">${st.icon} ${st.label}</span></td>
+                <td class="text-muted text-sm">${formatTime(d.timestamp)}</td>
+                <td>
+                  <a href="pedidos.html" class="btn btn-ghost btn-sm">Ver</a>
+                </td>
+              </tr>`;
+          });
+
+          html += '</tbody></table>';
+          container.innerHTML = html;
+        });
+    }
+
+    function updateCardapioLink(uid) {
+      const baseUrl = window.location.origin + window.location.pathname.replace('/admin/index.html', '');
+      const link = `${baseUrl}/cliente/cardapio.html?id=${uid}`;
+      document.getElementById('cardapioLink').textContent = link;
+    }
+
+    function copyCardapioLink() {
+      const link = document.getElementById('cardapioLink').textContent;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('Link copiado!', 'success');
+      });
+    }
+
+    async function handleLogout() {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

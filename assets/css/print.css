@@ -1,0 +1,143 @@
+/* ============================================================
+   IMPRESSÃO DE COMANDA — ESTILOS
+   Compatível com impressoras térmicas (58mm e 80mm)
+   ============================================================ */
+
+@media print {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    width: 80mm;
+  }
+
+  .no-print { display: none !important; }
+
+  .comanda {
+    width: 100%;
+    padding: 4mm;
+  }
+}
+
+/* Preview da comanda na tela */
+.comanda-preview {
+  background: white;
+  color: #000;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  width: 300px;
+  margin: 0 auto;
+  padding: 16px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+}
+
+.comanda-header {
+  text-align: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #000;
+}
+
+.comanda-header .rest-name {
+  font-size: 14px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.comanda-header .rest-address {
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.comanda-header .rest-whatsapp {
+  font-size: 10px;
+}
+
+.comanda-divider {
+  border: none;
+  border-top: 1px dashed #000;
+  margin: 8px 0;
+}
+
+.comanda-mesa {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin: 8px 0;
+  padding: 4px;
+  border: 2px solid #000;
+}
+
+.comanda-datetime {
+  font-size: 10px;
+  text-align: center;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.comanda-items {
+  margin: 8px 0;
+}
+
+.comanda-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 11px;
+  gap: 4px;
+}
+
+.comanda-item-name {
+  flex: 1;
+}
+
+.comanda-item-qty {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.comanda-item-price {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.comanda-obs {
+  font-size: 10px;
+  font-style: italic;
+  margin: 6px 0;
+  padding: 4px;
+  border: 1px dashed #999;
+}
+
+.comanda-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 14px;
+  padding-top: 8px;
+  border-top: 2px solid #000;
+  margin-top: 8px;
+}
+
+.comanda-footer {
+  text-align: center;
+  font-size: 10px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed #000;
+}
+
+.comanda-order-id {
+  font-size: 9px;
+  text-align: center;
+  color: #777;
+  margin-top: 4px;
+}

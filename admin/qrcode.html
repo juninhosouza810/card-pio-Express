@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code — Cardápio Digital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/global.css">
+  <link rel="stylesheet" href="../assets/css/admin.css">
+  <style>
+    .qr-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .qr-preview-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .qr-wrapper {
+      background: white;
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+    }
+
+    #qrCanvas {
+      display: block;
+    }
+
+    .qr-card-preview {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      border: 2px dashed var(--border);
+      max-width: 300px;
+      width: 100%;
+    }
+
+    .qr-card-preview .rest-name-preview {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .qr-card-preview .scan-text {
+      font-size: 0.85rem;
+      color: #636e72;
+      margin-bottom: 16px;
+    }
+
+    .qr-card-preview .qr-image-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .qr-card-preview .footer-text {
+      font-size: 0.75rem;
+      color: #b2bec3;
+    }
+
+    .mesa-qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .mesa-qr-item {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .mesa-qr-item:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow);
+    }
+
+    .mesa-qr-item canvas {
+      display: block;
+      margin: 0 auto 8px;
+    }
+
+    .mesa-qr-item .mesa-label {
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      .qr-main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-placeholder" id="sidebarLogoPlaceholder">🍽️</div>
+        <img id="sidebarLogo" style="display:none" alt="Logo">
+        <div class="logo-text">
+          <h3 id="sidebarName">Meu Restaurante</h3>
+          <span>Painel Admin</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item" href="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+          <a class="nav-item" href="pedidos.html"><span class="nav-icon">🛒</span> Pedidos <span class="nav-badge hidden" id="ordersBadge">0</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cardápio</div>
+          <a class="nav-item" href="categorias.html"><span class="nav-icon">📂</span> Categorias</a>
+          <a class="nav-item" href="produtos.html"><span class="nav-icon">🍔</span> Produtos</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Configurações</div>
+          <a class="nav-item" href="configuracoes.html"><span class="nav-icon">⚙️</span> Estabelecimento</a>
+          <a class="nav-item active" href="qrcode.html"><span class="nav-icon">📱</span> QR Code</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div>
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-email" id="userEmail">email@exemplo.com</div>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="handleLogout()">🚪 Sair</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+          <h2 class="topbar-title">QR Code do Cardápio</h2>
+        </div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm btn-icon" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="qr-main">
+          <!-- QR Code principal -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <h3>📱 QR Code Principal</h3>
+              </div>
+              <div class="card-body">
+                <div class="qr-preview-card">
+                  <div class="qr-wrapper">
+                    <canvas id="qrCanvas"></canvas>
+                  </div>
+
+                  <div style="width:100%">
+                    <label class="form-label">Link do Cardápio</label>
+                    <div style="display:flex;gap:8px">
+                      <input type="text" class="form-control" id="cardapioUrl" readonly style="font-size:0.8rem">
+                      <button class="btn btn-outline btn-sm" onclick="copyLink()" style="white-space:nowrap">📋 Copiar</button>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;gap:10px;width:100%;flex-wrap:wrap">
+                    <button class="btn btn-primary" onclick="downloadQR('png')" style="flex:1">
+                      ⬇️ Baixar PNG
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadQR('svg')" style="flex:1">
+                      ⬇️ Baixar SVG
+                    </button>
+                  </div>
+
+                  <button class="btn btn-outline btn-full" onclick="printQR()">
+                    🖨️ Imprimir QR Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personalização e cartão -->
+          <div>
+            <div class="card" style="margin-bottom:20px">
+              <div class="card-header">
+                <h3>🎨 Personalização</h3>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Tamanho do QR Code</label>
+                  <input type="range" id="qrSize" min="150" max="400" value="250" class="form-control" style="padding:4px" oninput="generateQR()">
+                  <div class="text-muted text-sm mt-1"><span id="qrSizeLabel">250</span>px</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Cor do QR Code</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="color" id="qrColor" value="#000000" class="form-control" style="padding:4px;height:44px;width:60px" oninput="generateQR()">
+                    <input type="color" id="qrBgColor" value="#ffffff" class="form-control" style="padding:4px;height:44px;width:60px" oninput="generateQR()">
+                    <div class="text-muted text-sm" style="align-self:center">Cor / Fundo</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cartão para imprimir -->
+            <div class="card">
+              <div class="card-header">
+                <h3>🃏 Cartão para Mesa</h3>
+              </div>
+              <div class="card-body">
+                <div class="qr-card-preview" id="qrCardPreview">
+                  <div class="rest-name-preview" id="cardRestName">Meu Restaurante</div>
+                  <div class="scan-text">📱 Escaneie para ver o cardápio e fazer seu pedido</div>
+                  <div class="qr-image-container">
+                    <canvas id="qrCardCanvas"></canvas>
+                  </div>
+                  <div class="footer-text">Cardápio Digital • Peça pelo celular</div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:8px">
+                  <button class="btn btn-primary btn-full" onclick="printCard()">🖨️ Imprimir Cartão</button>
+                  <button class="btn btn-outline" onclick="downloadCard()">⬇️ PNG</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QR Codes por mesa -->
+        <div class="card mt-3">
+          <div class="card-header">
+            <h3>🍽️ QR Codes por Mesa</h3>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="mesaCount" class="form-control" value="10" min="1" max="50" style="width:80px">
+              <button class="btn btn-primary btn-sm" onclick="generateMesaQRs()">Gerar</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="text-muted text-sm mb-2">Gere QR Codes individuais para cada mesa. Clique para baixar.</p>
+            <div class="mesa-qr-grid" id="mesaQrGrid">
+              <div class="text-muted text-sm">Clique em "Gerar" para criar os QR Codes das mesas.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- QRCode.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/admin-utils.js"></script>
+
+  <script>
+    let currentUser = null;
+    let cardapioUrl = '';
+    let qrInstance = null;
+    let qrCardInstance = null;
+
+    requireAuth(async (user) => {
+      currentUser = user;
+      initSidebar();
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.email[0].toUpperCase();
+      const est = await getEstabelecimento(user.uid);
+      if (est.nome) {
+        document.getElementById('sidebarName').textContent = est.nome;
+        document.getElementById('userName').textContent = est.nome;
+        document.getElementById('cardRestName').textContent = est.nome;
+      }
+      if (est.logoUrl) {
+        document.getElementById('sidebarLogo').src = est.logoUrl;
+        document.getElementById('sidebarLogo').style.display = 'block';
+        document.getElementById('sidebarLogoPlaceholder').style.display = 'none';
+      }
+
+      // Gerar URL do cardápio
+      const baseUrl = window.location.origin + window.location.pathname.replace('/admin/qrcode.html', '');
+      cardapioUrl = `${baseUrl}/cliente/cardapio.html?id=${user.uid}`;
+      document.getElementById('cardapioUrl').value = cardapioUrl;
+
+      generateQR();
+    });
+
+    function generateQR() {
+      if (!cardapioUrl) return;
+
+      const size = parseInt(document.getElementById('qrSize').value);
+      const color = document.getElementById('qrColor').value;
+      const bgColor = document.getElementById('qrBgColor').value;
+      document.getElementById('qrSizeLabel').textContent = size;
+
+      // QR principal
+      const canvas = document.getElementById('qrCanvas');
+      canvas.width = size;
+      canvas.height = size;
+      generateQROnCanvas(canvas, cardapioUrl, size, color, bgColor);
+
+      // QR do cartão
+      const cardCanvas = document.getElementById('qrCardCanvas');
+      cardCanvas.width = 180;
+      cardCanvas.height = 180;
+      generateQROnCanvas(cardCanvas, cardapioUrl, 180, '#000000', '#ffffff');
+    }
+
+    function generateQROnCanvas(canvas, url, size, darkColor, lightColor) {
+      // Usar QRCode.js via div temporário
+      const tempDiv = document.createElement('div');
+      document.body.appendChild(tempDiv);
+
+      new QRCode(tempDiv, {
+        text: url,
+        width: size,
+        height: size,
+        colorDark: darkColor,
+        colorLight: lightColor,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      setTimeout(() => {
+        const img = tempDiv.querySelector('img') || tempDiv.querySelector('canvas');
+        if (img) {
+          const ctx = canvas.getContext('2d');
+          if (img.tagName === 'CANVAS') {
+            ctx.drawImage(img, 0, 0, size, size);
+          } else {
+            const tempImg = new Image();
+            tempImg.onload = () => ctx.drawImage(tempImg, 0, 0, size, size);
+            tempImg.src = img.src;
+          }
+        }
+        tempDiv.remove();
+      }, 100);
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(cardapioUrl).then(() => {
+        showToast('Link copiado!', 'success');
+      });
+    }
+
+    function downloadQR(format) {
+      const canvas = document.getElementById('qrCanvas');
+      const link = document.createElement('a');
+      link.download = `cardapio-qrcode.${format === 'png' ? 'png' : 'png'}`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('QR Code baixado!', 'success');
+    }
+
+    function downloadCard() {
+      const card = document.getElementById('qrCardPreview');
+      // Usar html2canvas se disponível, senão baixar o canvas do QR
+      const canvas = document.getElementById('qrCardCanvas');
+      const link = document.createElement('a');
+      link.download = 'cartao-mesa.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function printQR() {
+      const canvas = document.getElementById('qrCanvas');
+      const imgData = canvas.toDataURL('image/png');
+      const printWindow = window.open('', '_blank', 'width=400,height=500');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>QR Code — Cardápio</title>
+          <style>
+            body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; text-align:center; }
+            img { max-width:300px; }
+            h2 { margin-bottom:8px; }
+            p { color:#636e72; font-size:0.9rem; }
+          </style>
+        </head>
+        <body>
+          <h2>${document.getElementById('cardRestName').textContent}</h2>
+          <p>Escaneie para ver o cardápio</p>
+          <img src="${imgData}" alt="QR Code">
+          <p style="margin-top:12px;font-size:0.75rem;color:#b2bec3">Cardápio Digital</p>
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body>
+        </html>`);
+      printWindow.document.close();
+    }
+
+    function printCard() {
+      const cardHtml = document.getElementById('qrCardPreview').outerHTML;
+      const canvas = document.getElementById('qrCardCanvas');
+      const qrImg = canvas.toDataURL('image/png');
+
+      const printWindow = window.open('', '_blank', 'width=400,height=500');
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Cartão de Mesa</title>
+          <style>
+            body { display:flex; align-items:center; justify-content:center; min-height:100vh; font-family:sans-serif; }
+            .card { border:2px dashed #ccc; border-radius:12px; padding:24px; text-align:center; max-width:280px; }
+            .rest-name { font-size:1.1rem; font-weight:800; margin-bottom:4px; }
+            .scan-text { font-size:0.85rem; color:#636e72; margin-bottom:16px; }
+            .footer-text { font-size:0.75rem; color:#b2bec3; margin-top:12px; }
+            img { width:180px; height:180px; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="rest-name">${document.getElementById('cardRestName').textContent}</div>
+            <div class="scan-text">📱 Escaneie para ver o cardápio e fazer seu pedido</div>
+            <img src="${qrImg}" alt="QR Code">
+            <div class="footer-text">Cardápio Digital • Peça pelo celular</div>
+          </div>
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body>
+        </html>`);
+      printWindow.document.close();
+    }
+
+    function generateMesaQRs() {
+      const count = parseInt(document.getElementById('mesaCount').value) || 10;
+      const grid = document.getElementById('mesaQrGrid');
+      grid.innerHTML = '';
+
+      for (let i = 1; i <= count; i++) {
+        const mesaUrl = `${cardapioUrl}&mesa=${i}`;
+        const item = document.createElement('div');
+        item.className = 'mesa-qr-item';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 100;
+        canvas.height = 100;
+
+        const label = document.createElement('div');
+        label.className = 'mesa-label';
+        label.textContent = `Mesa ${i}`;
+
+        item.appendChild(canvas);
+        item.appendChild(label);
+        item.onclick = () => downloadMesaQR(canvas, i);
+        grid.appendChild(item);
+
+        // Gerar QR
+        const tempDiv = document.createElement('div');
+        document.body.appendChild(tempDiv);
+        new QRCode(tempDiv, {
+          text: mesaUrl,
+          width: 100,
+          height: 100,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+
+        setTimeout(((c, td) => () => {
+          const img = td.querySelector('img') || td.querySelector('canvas');
+          if (img) {
+            const ctx = c.getContext('2d');
+            if (img.tagName === 'CANVAS') {
+              ctx.drawImage(img, 0, 0, 100, 100);
+            } else {
+              const ti = new Image();
+              ti.onload = () => ctx.drawImage(ti, 0, 0, 100, 100);
+              ti.src = img.src;
+            }
+          }
+          td.remove();
+        })(canvas, tempDiv), 150);
+      }
+
+      showToast(`${count} QR Codes gerados! Clique para baixar.`, 'success');
+    }
+
+    function downloadMesaQR(canvas, mesa) {
+      const link = document.createElement('a');
+      link.download = `mesa-${mesa}-qrcode.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    async function handleLogout() {
+      await auth.signOut();
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
